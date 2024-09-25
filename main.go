@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/insightengine2/ie2-endpoint-authors/lib"
 )
 
 type MyEvent struct {
@@ -20,10 +21,18 @@ func HandleRequest(context context.Context, ev MyEvent) (events.APIGatewayProxyR
 		IsBase64Encoded: false,
 		StatusCode:      200,
 		Headers:         nil,
-		Body:            "Success!",
+		Body:            "{}",
 	}
 
-	config.LoadDefaultConfig(context)
+	_, err := config.LoadDefaultConfig(context)
+
+	if err != nil {
+		res.StatusCode = 500
+		res.Body = err.Error()
+		return res, err
+	}
+
+	res.Body = lib.GetAuthors()
 
 	return res, nil
 }
