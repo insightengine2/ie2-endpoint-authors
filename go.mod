@@ -1,4 +1,4 @@
-module github.com/insightengine2/ie2-lambda-template
+module github.com/insightengine2/ie2-endpoint-authors
 
 go 1.22.3
 
