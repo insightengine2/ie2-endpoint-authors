@@ -1,13 +1,48 @@
 package lib
 
-func GetAuthors() string {
+import (
+	"context"
+	"time"
 
-	return `
-	{"FirstName": "Roger","LastName": "Stone"},
-	{"FirstName": "Danielle","LastName": "Steel"},
-	{"FirstName": "Howard","LastName": "Stern"},
-	{"FirstName": "Chris","LastName": "Hendricks"},
-	{"FirstName": "Gloria","LastName": "Steinem"},
-	{"FirstName": "Linda","LastName": "Worster"}
-	`
+	"github.com/jackc/pgx/v5"
+)
+
+type DBAuthor struct {
+	Id         *int       `json:"id" db:"id"`
+	FirstName  *string    `json:"firstname" db:"fname"`
+	MiddleName *string    `json:"middlename" db:"mname"`
+	LastName   *string    `json:"lastname" db:"lname"`
+	Title      *string    `json:"title" db:"title"`
+	IsActive   *bool      `json:"isactive" db:"isactive"`
+	CreatedOn  *time.Time `json:"createdon" db:"createdOn"`
+	UpdatedOn  *time.Time `json:"updatedon" db:"updatedOn"`
+	DeletedOn  *time.Time `json:"deletedon" db:"deletedOn"`
+}
+
+func GetAuthors() ([]DBAuthor, error) {
+
+	conn, err := GetPostgresConn("ie2")
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer CloseConn(conn)
+
+	qry := "SELECT * FROM authors"
+
+	rows, err := conn.Query(context.Background(), qry)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	authors, err := pgx.CollectRows(rows, pgx.RowToStructByName[DBAuthor])
+	if err != nil {
+		return nil, err
+	}
+
+	return authors, nil
 }

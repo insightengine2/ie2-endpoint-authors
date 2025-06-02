@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -9,13 +10,7 @@ import (
 	"github.com/insightengine2/ie2-endpoint-authors/lib"
 )
 
-type MyEvent struct {
-	// sample properties below
-	InstanceId string `json:"InstanceId"`
-	Status     string `json:"Status"`
-}
-
-func HandleRequest(context context.Context, ev MyEvent) (events.APIGatewayProxyResponse, error) {
+func HandleRequest(context context.Context, ev any) (events.APIGatewayProxyResponse, error) {
 
 	res := events.APIGatewayProxyResponse{
 		IsBase64Encoded: false,
@@ -32,7 +27,22 @@ func HandleRequest(context context.Context, ev MyEvent) (events.APIGatewayProxyR
 		return res, err
 	}
 
-	res.Body = lib.GetAuthors()
+	authors, err := lib.GetAuthors()
+
+	if err != nil {
+		res.StatusCode = 500
+		res.Body = err.Error()
+		return res, err
+	}
+
+	jsonAuthors, err := json.Marshal(authors)
+	if err != nil {
+		res.StatusCode = 500
+		res.Body = err.Error()
+		return res, err
+	}
+
+	res.Body = string(jsonAuthors)
 
 	return res, nil
 }
