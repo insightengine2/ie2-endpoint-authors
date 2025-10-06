@@ -46,3 +46,36 @@ func GetAuthors() ([]DBAuthor, error) {
 
 	return authors, nil
 }
+
+func GetAuthorsByName(name string) ([]DBAuthor, error) {
+
+	conn, err := GetPostgresConn("ie2")
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer CloseConn(conn)
+
+	qry := `SELECT * 
+			FROM authors 
+			WHERE fname ILIKE '%' || $1 || '%'
+           	   OR mname ILIKE '%' || $1 || '%'
+               OR lname ILIKE '%' || $1 || '%'
+	`
+
+	rows, err := conn.Query(context.Background(), qry, name)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	authors, err := pgx.CollectRows(rows, pgx.RowToStructByName[DBAuthor])
+	if err != nil {
+		return nil, err
+	}
+
+	return authors, nil
+}
