@@ -10,7 +10,7 @@ import (
 	"github.com/insightengine2/ie2-endpoint-authors/lib"
 )
 
-func HandleRequest(context context.Context, ev any) (events.APIGatewayProxyResponse, error) {
+func HandleRequest(context context.Context, ev events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
 	res := events.APIGatewayProxyResponse{
 		IsBase64Encoded: false,
@@ -27,7 +27,14 @@ func HandleRequest(context context.Context, ev any) (events.APIGatewayProxyRespo
 		return res, err
 	}
 
-	authors, err := lib.GetAuthors()
+	var authors []lib.DBAuthor
+	name, ok := ev.QueryStringParameters["name"]
+
+	if !ok {
+		authors, err = lib.GetAuthors()
+	} else {
+		authors, err = lib.GetAuthorsByName(name)
+	}
 
 	if err != nil {
 		res.StatusCode = 500
